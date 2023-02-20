@@ -1,4 +1,5 @@
 import yaml
+import docker
 
 
 class Network:
@@ -63,7 +64,6 @@ def generate_docker_compose(hosts):
 
 
 def run_command(container, command):
-    import docker
     client = docker.from_env()
     # Run command in container
     container = client.containers.get(container)
