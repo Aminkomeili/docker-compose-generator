@@ -1,0 +1,1 @@
+# auto_generate_docker_compose
