@@ -8,7 +8,7 @@ The run_command() function uses the Docker SDK for Python to execute a command i
 
 To use this code, you must have Docker and the Docker SDK for Python installed on your system. To run the code, simply execute the script:
 
-`python docker_compose_network.py`
+`python auto_generate_docker_compose.py`
 
 The script will generate the docker-compose.yml file, start the network of containers, execute a ping command from host2 to itself, and execute an echo command from host1.
 
