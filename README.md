@@ -1,15 +1,55 @@
-# auto_generate_docker_compose.yml
+# Docker Compose Generator
 
-This code is an example of how to use Docker Compose to create a network of containers. The code defines two hosts, host1 and host2, and three networks, net1, net2, and net3. host1 is connected to net1 and net2, while host2 is connected to net1 and net3. Each host runs an Alpine Linux container with a tail -f /dev/null command to keep the container running.
+This is a Python script for generating a Docker Compose file that defines a network and a container. It defines two classes Network and Host for creating the network and the container, respectively.
+Requirements
 
-The code generates a docker-compose.yml file that defines the services and networks for the network of containers. The generate_docker_compose() function creates a dictionary that is used to write the docker-compose.yml file to disk using the PyYAML library.
+1. Python 3.5 or higher
+2. Docker
 
-The run_command() function uses the Docker SDK for Python to execute a command inside a container. The function takes the name of the container and the command as arguments, starts the container, executes the command, stops the container, and returns the output of the command.
+## Installation
 
-To use this code, you must have Docker and the Docker SDK for Python installed on your system. To run the code, simply execute the script:
+    Clone this repository:
 
-`python auto_generate_docker_compose.py`
+    
 
-The script will generate the docker-compose.yml file, start the network of containers, execute a ping command from host2 to itself, and execute an echo command from host1.
+`git clone https://github.com/your-username/docker-compose-generator.git`
 
-The output of the ping command and the echo command will be printed to the console and saved to a file named result.txt.
+## Install the required packages:
+
+    pip install -r requirements.txt
+
+## Usage
+
+    Create a new Python script and import the Network, Host, and generate_docker_compose classes:
+
+    
+
+```
+import docker
+from docker_compose_generator import Network, Host, generate_docker_compose```
+
+Define the network(s) and host(s) that you want to create using the Network and Host classes:
+
+```
+network1 = Network("network1", "10.0.1.0/24", "10.0.1.1", "10.0.1.254")
+host1 = Host("host1", [network1])
+```
+Generate the Docker Compose file using the generate_docker_compose function:
+
+
+`docker_compose = generate_docker_compose([host1])`
+
+Save the Docker Compose file to disk:
+
+```
+
+with open("docker-compose.yml", "w") as f:
+    f.write(yaml.dump(docker_compose))
+```
+Run the Docker Compose file using the docker-compose command:
+
+`docker-compose up -d`
+
+License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
