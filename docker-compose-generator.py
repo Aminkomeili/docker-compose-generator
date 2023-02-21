@@ -73,30 +73,31 @@ def run_command(container, command):
     return result.output.decode('utf-8')
 
 
-if __name__ == '__main__':
-    host1 = Host(
-        name="host1",
-        networks=[
-            Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.1", gateway='10.0.1.100'),
-            Network(name="net2", subnet="10.0.2.0/24", intf="10.0.2.1", gateway='10.0.2.100'),
-        ]
-    )
-    host2 = Host(
-        name="host2",
-        networks=[
-            Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.2", gateway="10.0.1.100"),
-            Network(name="net3", subnet="10.0.3.0/24", intf="10.0.3.1", gateway="10.0.3.100"),
-        ]
-    )
+#Test Code
+# if __name__ == '__main__':
+#     host1 = Host(
+#         name="host1",
+#         networks=[
+#             Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.1", gateway='10.0.1.100'),
+#             Network(name="net2", subnet="10.0.2.0/24", intf="10.0.2.1", gateway='10.0.2.100'),
+#         ]
+#     )
+#     host2 = Host(
+#         name="host2",
+#         networks=[
+#             Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.2", gateway="10.0.1.100"),
+#             Network(name="net3", subnet="10.0.3.0/24", intf="10.0.3.1", gateway="10.0.3.100"),
+#         ]
+#     )
 
-    docker_compose = generate_docker_compose([host1, host2])
+#     docker_compose = generate_docker_compose([host1, host2])
 
-    with open("docker-compose.yml", "w") as file:
-        yaml.dump(docker_compose, file)
+#     with open("docker-compose.yml", "w") as file:
+#         yaml.dump(docker_compose, file)
 
-    result_c = run_command('dockerclient_host2_1', "ping -c 4 10.0.1.2")
-    result_d = run_command('dockerclient_host1_1', "echo Hello World")
-    print(result_c, result_d)
-    with open("result.txt", "w") as f:
-        f.write(result_c)
-        f.write(result_d)
+#     result_c = run_command('dockerclient_host2_1', "ping -c 4 10.0.1.2")
+#     result_d = run_command('dockerclient_host1_1', "echo Hello World")
+#     print(result_c, result_d)
+#     with open("result.txt", "w") as f:
+#         f.write(result_c)
+#         f.write(result_d)
