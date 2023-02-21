@@ -1,7 +1,8 @@
 # Docker Compose Generator
 
 This is a Python script for generating a Docker Compose file that defines a network and a container. It defines two classes Network and Host for creating the network and the container, respectively.
-Requirements
+
+## Requirements
 
 1. Python 3.5 or higher
 2. Docker
