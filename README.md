@@ -46,6 +46,6 @@ Run the Docker Compose file using the docker-compose command:
 
 `docker-compose up -d`
 
-License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
