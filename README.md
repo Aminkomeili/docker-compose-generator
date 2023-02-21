@@ -8,26 +8,21 @@ Requirements
 
 ## Installation
 
-    Clone this repository:
-
-    
+Clone this repository:
 
 `git clone https://github.com/your-username/docker-compose-generator.git`
 
 ## Install the required packages:
 
-    pip install -r requirements.txt
+` pip install -r requirements.txt`
 
 ## Usage
-
-    Create a new Python script and import the Network, Host, and generate_docker_compose classes:
-
-    
-
+ Create a new Python script and import the Network, Host, and generate_docker_compose classes:
+ 
 ```
 import docker
 from docker_compose_generator import Network, Host, generate_docker_compose```
-
+```
 Define the network(s) and host(s) that you want to create using the Network and Host classes:
 
 ```
@@ -36,16 +31,16 @@ host1 = Host("host1", [network1])
 ```
 Generate the Docker Compose file using the generate_docker_compose function:
 
-
 `docker_compose = generate_docker_compose([host1])`
+
 
 Save the Docker Compose file to disk:
 
 ```
-
 with open("docker-compose.yml", "w") as f:
     f.write(yaml.dump(docker_compose))
 ```
+
 Run the Docker Compose file using the docker-compose command:
 
 `docker-compose up -d`
