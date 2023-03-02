@@ -1,0 +1,39 @@
+networks:
+  net1:
+    driver: bridge
+    ipam:
+      config:
+      - gateway: 10.0.1.100
+        subnet: 10.0.1.0/24
+  net2:
+    driver: bridge
+    ipam:
+      config:
+      - gateway: 10.0.2.100
+        subnet: 10.0.2.0/24
+  net3:
+    driver: bridge
+    ipam:
+      config:
+      - gateway: 10.0.3.100
+        subnet: 10.0.3.0/24
+services:
+  host1:
+    command: tail -f /dev/null
+    image: alpine
+    networks:
+      net1:
+        ipv4_address: 10.0.1.1
+      net2:
+        ipv4_address: 10.0.2.1
+    tty: 'true'
+  host2:
+    command: tail -f /dev/null
+    image: alpine
+    networks:
+      net1:
+        ipv4_address: 10.0.1.2
+      net3:
+        ipv4_address: 10.0.3.1
+    tty: 'true'
+version: '2.4'
