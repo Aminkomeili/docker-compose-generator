@@ -1,5 +1,6 @@
 import yaml
 import docker
+import re
 
 
 class Network:
@@ -73,7 +74,50 @@ def run_command(container, command):
     return result.output.decode('utf-8')
 
 
-#Test Code
+def parse_ping_output(output):
+    # Extract transmitted, received and packet loss percentage
+    match = re.search(r'(\d+) packets transmitted, (\d+) received, (\d+)% packet loss, time \d+ms', output)
+    if match:
+        transmitted, received, packet_loss_percent = match.groups()
+    else:
+        transmitted, received, packet_loss_percent = None, None, None
+
+    # Extract min, avg, max and mdev RTT values
+    rtt_data = re.findall(r'rtt min/avg/max/mdev = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+) ms', output)
+    if rtt_data:
+        rtt_min, rtt_avg, rtt_max, rtt_mdev = rtt_data[0]
+    else:
+        rtt_min, rtt_avg, rtt_max, rtt_mdev = None, None, None, None
+
+    # Return parsed values as a dictionary
+    return {
+        'transmitted': int(transmitted),
+        'received': int(received),
+        'packet_loss_percent': int(packet_loss_percent),
+        'rtt_min': float(rtt_min) if rtt_min is not None else None,
+        'rtt_avg': float(rtt_avg) if rtt_avg is not None else None,
+        'rtt_max': float(rtt_max) if rtt_max is not None else None,
+        'rtt_mdev': float(rtt_mdev) if rtt_mdev is not None else None,
+    }
+
+
+def parse_tracepath_output(output):
+    hop_pattern = r'(\d+):\s+([^\s]+)\s+(.*)\s+([\d.]+)ms(?:\s+pmtu\s+(\d+))?'
+    hops = []
+    for match in re.findall(hop_pattern, output):
+        hop_data = {
+            'hop_number': int(match[0]),
+            'address': match[1],
+            'hostname': match[2],
+            'rtt': float(match[3]),
+        }
+        if match[4]:
+            hop_data['pmtu'] = int(match[4])
+        hops.append(hop_data)
+    return hops
+
+
+# #Test Code
 # if __name__ == '__main__':
 #     host1 = Host(
 #         name="host1",
@@ -89,14 +133,14 @@ def run_command(container, command):
 #             Network(name="net3", subnet="10.0.3.0/24", intf="10.0.3.1", gateway="10.0.3.100"),
 #         ]
 #     )
-
+#
 #     docker_compose = generate_docker_compose([host1, host2])
-
+#
 #     with open("docker-compose.yml", "w") as file:
 #         yaml.dump(docker_compose, file)
-
-#     result_c = run_command('dockerclient_host2_1', "ping -c 4 10.0.1.2")
-#     result_d = run_command('dockerclient_host1_1', "echo Hello World")
+#
+#     result_c = run_command('docker-compose-generator_host2_1', "ping -c 4 10.0.1.2")
+#     result_d = run_command('docker-compose-generator_host1_1', "echo Hello World")
 #     print(result_c, result_d)
 #     with open("result.txt", "w") as f:
 #         f.write(result_c)
