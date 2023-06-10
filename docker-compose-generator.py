@@ -1,10 +1,21 @@
+"""
+Author: Amin komeili
+Date: 2023-03-15
+"""
+import re
 import yaml
 import docker
-import re
+import os
 
 
 class Network:
     def __init__(self, name, subnet, intf, gateway):
+        """
+                :param name: نام شبکه
+                :param subnet: Subnet شبکه
+                :param intf: آدرس IP اینترفیس شبکه برای این Host
+                :param gateway: IP Gateway برای Subnet شبکه
+                """
         self.name = name
         self.subnet = subnet
         self.intf = intf
@@ -12,11 +23,21 @@ class Network:
 
 
 class Host:
-    def __init__(self, name, networks):
+    def __init__(self, name, networks, command="tail -f /dev/null"):
+        """
+               :param name: نام Host
+               :param networks: لیست شبکه هایی که Host به آن متصل است
+               """
         self.name = name
         self.networks = networks
+        self.command = command
 
     def to_dict(self):
+        """
+               تبدیل اطلاعات Host به فرمت dictionary برای استفاده در فایل Docker Compose
+
+               :return: دیکشنری حاوی اطلاعات Host
+               """
         networks_dict = {}
         for network in self.networks:
             networks_dict[network.name] = {
@@ -27,9 +48,9 @@ class Host:
             "version": "2.4",
             "services": {
                 self.name: {
+                    "container_name": self.name,
                     "image": "alpine",
-                    "command": "tail -f /dev/null",
-                    "tty": 'true',
+                    "command": self.command,
                     "networks": networks_dict
                 }
             },
@@ -51,6 +72,12 @@ class Host:
 
 
 def generate_docker_compose(hosts):
+    """
+        تبدیل اطلاعات تمامی Host ها به فرمت Docker Compose
+
+        :param hosts: لیست هاست هایی که باید به فایل Docker Compose اضافه شوند
+        :return: دیکشنری حاوی اطلاعات Docker Compose
+        """
     services = {}
     networks = {}
     for host in hosts:
@@ -64,32 +91,35 @@ def generate_docker_compose(hosts):
     }
 
 
-def run_command(container, command):
-    client = docker.from_env()
-    # Run command in container
-    container = client.containers.get(container)
-    container.start()
-    result = container.exec_run(command)
-    container.stop()
-    return result.output.decode('utf-8')
+# def run_command(container, command=None):
+#     """
+#         اجرای دستور داخل یک container و بازگرداندن output آن
+#
+#         :param container: نام container
+#         :param command: دستوری که باید اجرا شود
+#         :return: خروجی دستور اجرا شده
+#         """
+#     client = docker.from_env()
+#     container = client.containers.get(container)
+#     container.start()
+#     # result = container.exec_run(command)
+#     container.stop()
+#     # return result.output.decode('utf-8')
 
 
 def parse_ping_output(output):
-    # Extract transmitted, received and packet loss percentage
     match = re.search(r'(\d+) packets transmitted, (\d+) received, (\d+)% packet loss, time \d+ms', output)
     if match:
         transmitted, received, packet_loss_percent = match.groups()
     else:
         transmitted, received, packet_loss_percent = None, None, None
 
-    # Extract min, avg, max and mdev RTT values
     rtt_data = re.findall(r'rtt min/avg/max/mdev = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+) ms', output)
     if rtt_data:
         rtt_min, rtt_avg, rtt_max, rtt_mdev = rtt_data[0]
     else:
         rtt_min, rtt_avg, rtt_max, rtt_mdev = None, None, None, None
 
-    # Return parsed values as a dictionary
     return {
         'transmitted': int(transmitted),
         'received': int(received),
@@ -117,31 +147,33 @@ def parse_tracepath_output(output):
     return hops
 
 
-# #Test Code
-# if __name__ == '__main__':
-#     host1 = Host(
-#         name="host1",
-#         networks=[
-#             Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.1", gateway='10.0.1.100'),
-#             Network(name="net2", subnet="10.0.2.0/24", intf="10.0.2.1", gateway='10.0.2.100'),
-#         ]
-#     )
-#     host2 = Host(
-#         name="host2",
-#         networks=[
-#             Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.2", gateway="10.0.1.100"),
-#             Network(name="net3", subnet="10.0.3.0/24", intf="10.0.3.1", gateway="10.0.3.100"),
-#         ]
-#     )
-#
-#     docker_compose = generate_docker_compose([host1, host2])
-#
-#     with open("docker-compose.yml", "w") as file:
-#         yaml.dump(docker_compose, file)
-#
-#     result_c = run_command('docker-compose-generator_host2_1', "ping -c 4 10.0.1.2")
-#     result_d = run_command('docker-compose-generator_host1_1', "echo Hello World")
-#     print(result_c, result_d)
+# Test Code
+if __name__ == '__main__':
+    host1 = Host(
+        name="host1",
+        networks=[
+            Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.1", gateway='10.0.1.100'),
+            Network(name="net2", subnet="10.0.2.0/24", intf="10.0.2.1", gateway='10.0.2.100'),
+        ], command="ping -c 4 1.1.1.1 "
+    )
+    host2 = Host(
+        name="host2",
+        networks=[
+            Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.2", gateway="10.0.1.100"),
+            Network(name="net3", subnet="10.0.3.0/24", intf="10.0.3.1", gateway="10.0.3.100"),
+        ], command="ping -c 4 1.1.1.1 "
+    )
+
+    docker_compose = generate_docker_compose([host1, host2])
+
+    with open("docker-compose.yml", "w") as file:
+        yaml.dump(docker_compose, file)
+    os.system("docker-compose up")
+
+    # result_c = run_command('host1')
+    # result_d = run_command('host2')
+
+    # print(result_c, result_d)
 #     with open("result.txt", "w") as f:
 #         f.write(result_c)
 #         f.write(result_d)
