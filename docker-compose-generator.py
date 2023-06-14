@@ -2,11 +2,12 @@
 Author: Amin komeili
 Date: 2023-03-15
 """
-
 import re
 import yaml
-import docker
 import os
+import docker
+import sys
+import subprocess
 
 
 class Network:
@@ -51,7 +52,7 @@ class Host:
                 self.name: {
                     "container_name": self.name,
                     "image": "alpine",
-                    "command": self.command,
+                    "command": 'tail -f /dev/null',
                     "networks": networks_dict
                 }
             },
@@ -70,6 +71,21 @@ class Host:
                 for network in self.networks
             }
         }
+
+    def run_command(self):
+        """
+            اجرای دستور داخل یک container و بازگرداندن output آن
+
+            :param container: نام container
+            :param command: دستوری که باید اجرا شود
+            :return: خروجی دستور اجرا شده
+            """
+        client = docker.from_env()
+        container = client.containers.get(self.name)
+        container.start()
+        result = container.exec_run(self.command)
+        container.stop()
+        return result.output.decode('utf-8')
 
 
 def generate_docker_compose(hosts):
@@ -92,43 +108,26 @@ def generate_docker_compose(hosts):
     }
 
 
-# def run_command(container, command=None):
-#     """
-#         اجرای دستور داخل یک container و بازگرداندن output آن
-#
-#         :param container: نام container
-#         :param command: دستوری که باید اجرا شود
-#         :return: خروجی دستور اجرا شده
-#         """
-#     client = docker.from_env()
-#     container = client.containers.get(container)
-#     container.start()
-#     # result = container.exec_run(command)
-#     container.stop()
-#     # return result.output.decode('utf-8')
-
-
 def parse_ping_output(output):
-    match = re.search(r'(\d+) packets transmitted, (\d+) received, (\d+)% packet loss, time \d+ms', output)
+    match = re.search(r'(\d+) packets transmitted, (\d+) packets received, (\d+)% packet loss', output)
     if match:
         transmitted, received, packet_loss_percent = match.groups()
     else:
         transmitted, received, packet_loss_percent = None, None, None
 
-    rtt_data = re.findall(r'rtt min/avg/max/mdev = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+) ms', output)
+    rtt_data = re.findall(r'round-trip min/avg/max = ([\d.]+)/([\d.]+)/([\d.]+) ms', output)
     if rtt_data:
-        rtt_min, rtt_avg, rtt_max, rtt_mdev = rtt_data[0]
+        rtt_min, rtt_avg, rtt_max = rtt_data[0]
     else:
-        rtt_min, rtt_avg, rtt_max, rtt_mdev = None, None, None, None
+        rtt_min, rtt_avg, rtt_max = None, None, None
 
     return {
         'transmitted': int(transmitted),
         'received': int(received),
-        'packet_loss_percent': int(packet_loss_percent),
+        'packet_loss_percent': str(packet_loss_percent),
         'rtt_min': float(rtt_min) if rtt_min is not None else None,
         'rtt_avg': float(rtt_avg) if rtt_avg is not None else None,
         'rtt_max': float(rtt_max) if rtt_max is not None else None,
-        'rtt_mdev': float(rtt_mdev) if rtt_mdev is not None else None,
     }
 
 
@@ -162,19 +161,16 @@ if __name__ == '__main__':
         networks=[
             Network(name="net1", subnet="10.0.1.0/24", intf="10.0.1.2", gateway="10.0.1.100"),
             Network(name="net3", subnet="10.0.3.0/24", intf="10.0.3.1", gateway="10.0.3.100"),
-        ], command="ping -c 4 1.1.1.1 "
+        ], command="ping -c 4 1.1.1.1"
     )
 
-    docker_compose = generate_docker_compose([host1, host2])
+    docker_compose = generate_docker_compose([host1])
 
     with open("docker-compose.yml", "w") as file:
         yaml.dump(docker_compose, file)
-    os.system("docker-compose up")
+    os.system("docker-compose up -d")
+    rs1 = host1.run_command()
+    # rs2 = host2.run_command()
 
-    # result_c = run_command('host1')
-    # result_d = run_command('host2')
-
-    # print(result_c, result_d)
-#     with open("result.txt", "w") as f:
-#         f.write(result_c)
-#         f.write(result_d)
+    # print(rs1, rs2)
+    print(parse_ping_output(rs1))
