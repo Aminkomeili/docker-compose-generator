@@ -6,8 +6,7 @@ import re
 import yaml
 import os
 import docker
-import sys
-import subprocess
+
 
 
 class Network:
