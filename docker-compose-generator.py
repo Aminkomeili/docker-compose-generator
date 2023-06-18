@@ -170,6 +170,5 @@ if __name__ == '__main__':
     os.system("docker-compose up -d")
     rs1 = host1.run_command()
     # rs2 = host2.run_command()
-
     # print(rs1, rs2)
     print(parse_ping_output(rs1))
